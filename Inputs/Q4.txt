@@ -1,0 +1,25 @@
+isPalindrome N 
+   where
+      getLen (N, L) = 
+         if N eq 0 then L
+         else getLen(N / 10, L + 1);
+
+      firstDigit (N, L) = 
+         if L eq 1 then N
+         else firstDigit(N / 10, L - 1);
+
+      lastDigit N =
+         N mod 10;
+
+      checkPalindrome (N, L) = 
+         if L <= 1 then true
+         else
+            if firstDigit(N, L) eq lastDigit N
+            then checkPalindrome((N % (10 ^ (L - 1))) / 10, L - 2)
+            else false;
+   in
+      checkPalindrome(N, getLen(N, 0));
+
+print(isPalindrome(1331));  
+print(isPalindrome(12321)); 
+print(isPalindrome(12345)); 

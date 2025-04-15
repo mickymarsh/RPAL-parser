@@ -1,0 +1,5 @@
+let rec mod (N, X) = N < X -> N | mod(N-X, X)
+in 
+let odd N = mod(N, 2) eq 1 -> 'Odd' | 'Even'
+in 
+print(odd 10)

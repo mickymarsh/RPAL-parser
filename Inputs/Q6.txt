@@ -1,0 +1,23 @@
+let rec getlen (N,L) = N eq 0 -> L | getlen ( N/10, L+1)
+in 
+let rec firstdigit(N,L) = getlen(N, 0) eq 1 -> N | firstdigit(N/10, L-1)
+in
+let rec mod (N, X) = N < X -> N | mod(N-X, X)
+in 
+let lastdigit N = mod(N, 10)
+in
+let pow (n, l) = n ** (l-1)
+in 
+let power n = pow(10, getlen(n,0))
+in
+let middlestring N = (mod(N, power N)) / 10
+in
+let rec checkPalindrome N = getlen (N,0) <= 1 -> 'Is a Palindrome' | 
+	(firstdigit(N,1) eq lastdigit(N) -> checkPalindrome(middlestring N) | 'Not a Palindrome')
+	
+in
+let rec f(x, y) = 
+	
+	x <= y -> (checkPalindrome x eq 'Is a Palindrome' -> (f(x+1, y), print(' '), print(x)) | f(x+1, y) ) | nil
+
+in f(1, 130)

@@ -1,0 +1,14 @@
+let rec fib x = 
+      x eq 0 -> 0
+    | x eq 1 -> 1
+    | fib (x-1) + fib (x-2)
+in
+let rec f(x, y) = 
+	
+	x <= y -> (x <= y -> (f(x+1, y), print(' '), print(fib x)) | nil)
+	 | print('')
+
+in f(1, 6)
+
+
+
