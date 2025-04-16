@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from "../Lexer/validToken" import validToken, validTokenTypes
+from Lexer.validTokens import validToken, validTokenTypes
 
 class NodeType(Enum):
     let = auto()
@@ -41,10 +41,12 @@ class NodeType(Enum):
     empty_params = auto()
 
 class ParseNode:
-    def __init__(self, node_type, children=None, value=None):
+    def __init__(self, node_type, children=None, value=None,tokens=None):
+        self.tokens = tokens
         self.node_type = node_type
         self.children = children if children is not None else []
         self.value = value  # Optional, for terminal values like identifier or integer
+        self.pos = 0  # Initialize position for token tracking
 
     def __repr__(self):
         if self.value is not None:
@@ -53,6 +55,19 @@ class ParseNode:
             return f"{self.node_type.name}({', '.join(map(str, self.children))})"
         else:
             return f"{self.node_type.name}"
+        
+    def peek(self):
+        return self.tokens[self.pos] if self.pos < len(self.tokens) else None
+
+    def advance(self):
+        self.pos += 1
+
+    def match(self, token_type, context=None):
+        token = self.peek()
+        if token and token.getType() == token_type and (context is None or token.getContext() == context):
+            self.advance()
+            return True
+        return False
 
     def parseE(self):
         token = self.peek()
@@ -71,7 +86,7 @@ class ParseNode:
                 if self.match(validTokenTypes.Operator, '.'):
                     break
             e = self.parseE()
-            return ParseNode(NodeType.LAMBDA, vb_list + [e])
+            return ParseNode(NodeType.lambda_, vb_list + [e])
         else:
             return self.parseEw()
 
@@ -106,27 +121,27 @@ class ParseNode:
             true_branch = self.parseTc()
             self.expect(validTokenTypes.Operator, '|')
             false_branch = self.parseTc()
-            return ParseNode(NodeType.conditional, [b, true_branch, false_branch])
+            return ParseNode(NodeType.arrow, [b, true_branch, false_branch])
         return b
 
     def parseB(self):
         bt = self.parseBt()
         while self.match(validTokenTypes.Keyword, 'or'):
             right = self.parseBt()
-            bt = ParseNode(NodeType.op_or, [bt, right])
+            bt = ParseNode(NodeType.or_, [bt, right])
         return bt
 
     def parseBt(self):
         bs = self.parseBs()
         while self.match(validTokenTypes.Operator, '&'):
             right = self.parseBs()
-            bs = ParseNode(NodeType.op_and, [bs, right])
+            bs = ParseNode(NodeType.and_, [bs, right])
         return bs
 
     def parseBs(self):
         if self.match(validTokenTypes.Keyword, 'not'):
             bp = self.parseBp()
-            return ParseNode(NodeType.op_not, [bp])
+            return ParseNode(NodeType.not_, [bp])
         return self.parseBp()
 
     def parseBp(self):
@@ -136,11 +151,30 @@ class ParseNode:
             if token.getContext() in ['gr', 'ge', 'ls', 'le', 'eq', 'ne']:
                 self.advance()
                 a2 = self.parseA()
-                return ParseNode(NodeType.op_compare, [a1, a2])
+                if token.getContext() == 'gr':
+                    return ParseNode(NodeType.gr, [a1, a2])
+                elif token.getContext() == 'ge':
+                    return ParseNode(NodeType.ge, [a1, a2])
+                elif token.getContext() == 'ls':
+                    return ParseNode(NodeType.ls, [a1, a2])
+                elif token.getContext() == 'le':
+                    return ParseNode(NodeType.le, [a1, a2])
+                elif token.getContext() == 'eq':
+                    return ParseNode(NodeType.eq, [a1, a2])
+                elif token.getContext() == 'ne':
+                    return ParseNode(NodeType.ne, [a1, a2])
         if token and token.getType() == validTokenTypes.Operator and token.getContext() in ['>', '>=', '<', '<=']:
             self.advance()
             a2 = self.parseA()
-            return ParseNode(NodeType.op_compare, [a1, a2])
+            if token.getContext() == '>':
+                return ParseNode(NodeType.gr, [a1, a2])
+            elif token.getContext() == '>=':
+                return ParseNode(NodeType.ge, [a1, a2])
+            elif token.getContext() == '<':
+                return ParseNode(NodeType.ls, [a1, a2])
+            elif token.getContext() == '<=':
+                return ParseNode(NodeType.le, [a1, a2])
+            
         return a1
 
     def parseA(self):
@@ -148,7 +182,7 @@ class ParseNode:
         if token and token.getType() == validTokenTypes.Operator and token.getContext() in ['+', '-']:
             self.advance()
             at = self.parseAt()
-            return ParseNode(NodeType.op_neg, [at])
+            return ParseNode(NodeType.neg, [at])
         a = self.parseAt()
         while True:
             token = self.peek()
@@ -156,7 +190,7 @@ class ParseNode:
                 op = token.getContext()
                 self.advance()
                 right = self.parseAt()
-                node_type = NodeType.op_plus if op == '+' else NodeType.op_minus
+                node_type = NodeType.plus if op == '+' else NodeType.minus
                 a = ParseNode(node_type, [a, right])
             else:
                 break
@@ -170,7 +204,7 @@ class ParseNode:
                 op = token.getContext()
                 self.advance()
                 right = self.parseAf()
-                node_type = NodeType.op_mul if op == '*' else NodeType.op_div
+                node_type = NodeType.mul if op == '*' else NodeType.div
                 af = ParseNode(node_type, [af, right])
             else:
                 break
@@ -180,7 +214,7 @@ class ParseNode:
         ap = self.parseAp()
         if self.match(validTokenTypes.Operator, '**'):
             right = self.parseAf()
-            return ParseNode(NodeType.op_pow, [ap, right])
+            return ParseNode(NodeType.pow, [ap, right])
         return ap
 
     def parseAp(self):
@@ -191,3 +225,153 @@ class ParseNode:
             rand = self.parseR()
             r = ParseNode(NodeType.at, [r, rator, rand])
         return r
+
+    def parseR(self):
+        rn=self.parseRn()
+        while self.match(validTokenTypes.Keyword, 'gamma'):
+            self.advance()
+            r=self.parseR()
+            rn=ParseNode(NodeType.gamma,[rn,r])
+        return rn
+    
+    def parseRn(self):
+        token = self.peek()
+        if token and token.getType() == validTokenTypes.Keyword and token.getContext() == 'true':
+            self.advance()
+            return ParseNode(NodeType.true)
+        elif token and token.getType() == validTokenTypes.Keyword and token.getContext() == 'false':
+            self.advance()
+            return ParseNode(NodeType.false)
+        elif token and token.getType() == validTokenTypes.Keyword and token.getContext() == 'nil':
+            self.advance()
+            return ParseNode(NodeType.nil)
+        elif token and token.getType() == validTokenTypes.Keyword and token.getContext() == 'dummy':
+            self.advance()
+            return ParseNode(NodeType.dummy)
+        
+        elif token and token.getType() == validTokenTypes.Punction and token.getContext() == '(':
+            self.advance()
+            e = self.parseE()  # Parse the expression inside parentheses
+            self.expect(validTokenTypes.Punction, ')')  # Ensure closing parenthesis
+            return e
+        
+        elif (token := self.peek()) is not None:
+            if (token_type := token.getType()) in {validTokenTypes.Identifier, validTokenTypes.Integer, validTokenTypes.String}:
+                self.advance()
+                return ParseNode(
+                    NodeType.identifier if token_type == validTokenTypes.Identifier else
+                    NodeType.integer if token_type == validTokenTypes.Integer else
+                    NodeType.string,
+                    value=token.getContext())
+    
+
+    def parseD(self):
+        da=self.parseDa()
+        while self.match(validTokenTypes.Keyword,'within'):
+            self.advance()
+            d=self.parseD()
+            da=ParseNode(NodeType.within,[da,d])
+        return da
+    
+    def parseDa(self):
+        dr=self.parseDr()
+        nodes=[dr]
+        while self.match(validTokenTypes.Keyword,'and'):
+            nodes.append(self.parseDr())
+        if len(nodes)>1:
+            return ParseNode(NodeType.andop,nodes)
+        return dr
+    
+    def parseDr(self):
+        
+        if self.match(validTokenTypes.Keyword,'rec'):
+            db=self.parseDb()
+            
+            return ParseNode(NodeType.rec,[db])
+        return self.parseDb()
+    
+    def parseDb(self):
+        token=self.peek()
+        if token and token.getType() == validTokenTypes.Operator and token.getContext() == "Vl":
+            self.advance()
+            vl=self.parseVl()
+            self.expect(validTokenTypes.Operator,'=')
+            e=self.parseE()
+            return ParseNode(NodeType.equal,[vl,e])
+        elif token and token.getType() == validTokenTypes.Identifier:
+            id_token = self.expect(validTokenTypes.Identifier)
+            rator = ParseNode(NodeType.identifier, [id_token])
+            self.advance()
+            vb_list = []
+            while True:
+                
+                if self.peek().getType() == validTokenTypes.Operator and self.peek().getContext() == '=':
+                    self.advance()
+                    break
+                vb = self.parseVb()
+                vb_list.append(vb)
+            
+            e = self.parseE()
+            return ParseNode(NodeType.fcn_form,rator, vb_list + [e])
+        
+        elif token and token.getType() == validTokenTypes.Punction and token.getContext() == '(':
+            self.advance()
+            d = self.parseD()  # Parse the expression inside parentheses
+            self.expect(validTokenTypes.Punction, ')')  # Ensure closing parenthesis
+            return d
+
+        
+    def parseVb(self):
+        token=self.peek()
+        if token and token.getType() == validTokenTypes.Punction and token.getContext() == '(':
+            self.advance()
+            if self.match(validTokenTypes.Punction, ')'):
+                return ParseNode(NodeType.empty_params)
+            else:
+                vl = self.parseVl()
+                self.expect(validTokenTypes.Punction, ')')  # Ensure closing parenthesis
+                return vl
+        elif token and token.getType() == validTokenTypes.Identifier:
+        
+            self.advance()
+            return ParseNode(NodeType.identifier, value=token.getContext())
+        
+    
+    def parseVl(self):
+        nodes = []
+        while True:
+            token = self.peek()
+            if token and token.getType() == validTokenTypes.Identifier:
+                self.advance()
+                nodes.append(ParseNode(NodeType.identifier, value=token.getContext()))
+                if not self.match(validTokenTypes.Punction, ','):  # Check for a comma
+                    break
+            else:
+                break
+        if len(nodes) == 1:
+            return nodes[0]  # Return a single identifier if there's no list
+        return ParseNode(NodeType.comma, nodes)  # Return a node representing the list
+
+        
+        
+    def expect(self, token_type, context=None):
+        token = self.peek()
+        if not token or token.getType() != token_type or (context and token.getContext() != context):
+            raise SyntaxError(f"Expected {token_type} {context}, but got {token}")
+        self.advance()
+
+    def parse(self):
+        return self.parseE()   
+    
+
+
+    
+    
+        
+
+
+            
+    
+
+        
+        
