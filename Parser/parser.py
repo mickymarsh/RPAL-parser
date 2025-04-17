@@ -56,6 +56,42 @@ class ParseNode:
         else:
             return f"{self.node_type.name}"
         
+    # def print_tree(self, indent=0):
+    #     """Recursively print the parse tree with proper indentation."""
+    #     # Print the current node with indentation
+    #     print('  ' * indent + str(self))
+        
+    #     # Check if children is a list or iterable
+    #     if self.children:
+    #         # If children is a list, iterate through it
+    #         if isinstance(self.children, list):
+    #             for child in self.children:
+    #                 child.print_tree(indent + 1)
+    #         # If children is a single node, print it
+    #         else:
+    #             self.children.print_tree(indent + 1)
+
+    def print_tree(self, indent=0):
+        """Recursively print the parse tree with proper indentation."""
+        # Print the current node with indentation
+        print('  ' * indent + str(self))
+        
+        # Check if children is a list or iterable
+        if self.children:
+            # If children is a list, iterate through it
+            if isinstance(self.children, list):
+                for child in self.children:
+                    # Check if child is None before calling print_tree
+                    if child is not None:
+                        child.print_tree(indent + 1)
+                    else:
+                        print('  ' * (indent + 1) + "None")
+            # If children is a single node, print it if not None
+            elif self.children is not None:
+                self.children.print_tree(indent + 1)
+            else:
+                print('  ' * (indent + 1) + "None")
+        
     def peek(self):
         return self.tokens[self.pos] if self.pos < len(self.tokens) else None
 

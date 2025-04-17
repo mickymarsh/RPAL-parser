@@ -15,13 +15,12 @@ if __name__ == "__main__":
     for token in tokens:
         print(f"Type: {token.getType().name}, Value: {token.getContext()}")
 
-    print("\n🌲 Parsing the Tokens:")
-    # Initialize the parser with the tokens
-    parser = ParseNode(tokens)
-    try:
-        # Parse the tokens and generate the parse tree
-        parse_tree = parser.parse()
-        print("\n✅ Parse Tree:")
-        print(parse_tree)  
-    except SyntaxError as e:
-        print(f"\n❌ Syntax Error: {e}")
+    # Create a parser instance with the tokens
+    parser = ParseNode(None, tokens=tokens)
+    
+    # Parse the tokens into a syntax tree
+    parse_tree = parser.parse()
+    
+    # Print the parse tree using the class method
+    print("\n🌳 Parse Tree:")
+    parse_tree.print_tree()
