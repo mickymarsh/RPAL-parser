@@ -7,12 +7,15 @@ def tokenize(text):
     tokens = []
     tokenPatterns = dict(
         Comment = r'//.*',
+
         Keyword = r'(let|in|fn|where|aug|or|not|gr|ge|ls|le|eq|ne|true|false|nil|dummy|within|and|rec)\b',
         String = r'\'(?:\\\'|[^\'])*\'',
         Identifier = r'[a-zA-Z][a-zA-Z0-9_]*',
         Integer = r'\d+',
         Operator = r'[+\-*<>&.@/:=~|$\#!%^_\[\]{}"\'?]+',
+
         Space = r'[ \t\n]+',
+
         Punction = r'[();,]'
     )
 
@@ -23,8 +26,8 @@ def tokenize(text):
 
             if match:
                 # debugging
-                print("Matched pattern:", key)       # <--- this is your key!
-                print("Matched value :", match.group(0))
+                # print("Matched pattern:", key)       # <--- this is your key!
+                # print("Matched value :", match.group(0))
 
                 if(key == "Space" or key == "Comment"):
                     matched = True

@@ -7,6 +7,7 @@ class validTokenTypes(Enum):
     String = 4
     Punction = 5
     Keyword = 6
+    End_of_tokens = 7
 
 class validToken:
 

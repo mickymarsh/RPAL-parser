@@ -7,9 +7,8 @@ if __name__ == "__main__":
 
     print("🔍 Input code:")
     print(code)
-    print("\n🧪 Lexical Analysis (Tokens):")
 
     tokens = tokenize(code)
-    print("\n✅ Final Tokens:")
+    print("\n✅ Lexical Analysis (Tokens):")
     for token in tokens:
-        print(f"Type: {token.getType().name}, Value: {token.getContext()}")
+        print(f"Type: {token.getType().name}, Context: {token.getContext()}")
