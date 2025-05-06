@@ -14,7 +14,11 @@ if __name__ == "__main__":
     for token in tokens:
         print(f"Type: {token.getType().name}, Context: {token.getContext()}")
 
-    print("Lexical analyzer finished")
+    print("\nLexical analyzer finished\n")
 
     parser = Parser(tokens=tokens)
     parser.parse()
+    parser.builder.print_tree()
+
+    code = parser.builder.tree_to_string(parser.builder.stack[-1])
+    print("\nfunction is = ", code)
