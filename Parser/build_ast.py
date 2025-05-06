@@ -1,4 +1,4 @@
-from node import Node  # <-- This is the import line
+from Parser.node import Node  # <-- This is the import line
 
 class TreeBuilder:
     def __init__(self):
