@@ -201,15 +201,15 @@ class Parser:
             print("Now the top token is : ", self.tokens[0].context, "\n")
 
             if token.context == ">":
-                self.builder.build_tree('gr', 3)
+                self.builder.build_tree('gr', 2)
             elif token.context == ">=":
-                self.builder.build_tree('ge', 3)
+                self.builder.build_tree('ge', 2)
             elif token.context == "<":
-                self.builder.build_tree('ls', 3)
+                self.builder.build_tree('ls', 2)
             elif token.context == "<=":
-                self.builder.build_tree('le', 3)
+                self.builder.build_tree('le', 2)
             else:
-                self.builder.build_tree(token.context, 3)
+                self.builder.build_tree(token.context, 2)
 
     # Arithmetic Expressions
 
@@ -478,7 +478,7 @@ class Parser:
                 self.E()
                 print("come back to Db after E")
 
-                self.builder.build_tree('fcn_form', n)
+                self.builder.build_tree('fcn_form', n+1)
 
             elif self.tokens[1].context == "=":
                 self.builder.build_tree(self.tokens[0].context, 0)
