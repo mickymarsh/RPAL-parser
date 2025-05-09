@@ -1,97 +1,11 @@
-from enum import Enum, auto
+from Parser.node import ParseNode, NodeType
 from Lexer.validTokens import validToken, validTokenTypes
 
-class NodeType(Enum):
-    let = auto()
-    lambda_ = auto()     # 'lambda' is a Python keyword, so we use lambda_
-    where = auto()
-    tau = auto()
-    aug = auto()
-    arrow = auto()       # for '->' expression
-    or_ = auto()         # 'or' is also a Python keyword
-    and_ = auto()
-    not_ = auto()
-    gr = auto()
-    ge = auto()
-    ls = auto()
-    le = auto()
-    eq = auto()
-    ne = auto()
-    plus = auto()
-    minus = auto()
-    neg = auto()
-    mul = auto()
-    div = auto()
-    pow = auto()         # for '**'
-    at = auto()
-    gamma = auto()
-    true = auto()
-    false = auto()
-    nil = auto()
-    dummy = auto()
-    within = auto()
-    andop = auto()       # distinguish definition-level 'and'
-    rec = auto()
-    equal = auto()
-    fcn_form = auto()
-    identifier = auto()
-    integer = auto()
-    string = auto()
-    comma = auto()
-    empty_params = auto()
-
-class ParseNode:
-    def __init__(self, node_type, children=None, value=None,tokens=None):
+class ASTParser:
+    def __init__(self, tokens):
         self.tokens = tokens
-        self.node_type = node_type
-        self.children = children if children is not None else []
-        self.value = value  # Optional, for terminal values like identifier or integer
-        self.pos = 0  # Initialize position for token tracking
+        self.pos = 0
 
-    def __repr__(self):
-        if self.value is not None:
-            return f"{self.node_type.name}({self.value})"
-        elif self.children:
-            return f"{self.node_type.name}({', '.join(map(str, self.children))})"
-        else:
-            return f"{self.node_type.name}"
-        
-    # def print_tree(self, indent=0):
-    #     """Recursively print the parse tree with proper indentation."""
-    #     # Print the current node with indentation
-    #     print('  ' * indent + str(self))
-        
-    #     # Check if children is a list or iterable
-    #     if self.children:
-    #         # If children is a list, iterate through it
-    #         if isinstance(self.children, list):
-    #             for child in self.children:
-    #                 child.print_tree(indent + 1)
-    #         # If children is a single node, print it
-    #         else:
-    #             self.children.print_tree(indent + 1)
-
-    def print_tree(self, indent=0):
-        """Recursively print the parse tree with proper indentation."""
-        # Print the current node with indentation
-        print('  ' * indent + str(self))
-        
-        # Check if children is a list or iterable
-        if self.children:
-            # If children is a list, iterate through it
-            if isinstance(self.children, list):
-                for child in self.children:
-                    # Check if child is None before calling print_tree
-                    if child is not None:
-                        child.print_tree(indent + 1)
-                    else:
-                        print('  ' * (indent + 1) + "None")
-            # If children is a single node, print it if not None
-            elif self.children is not None:
-                self.children.print_tree(indent + 1)
-            else:
-                print('  ' * (indent + 1) + "None")
-        
     def peek(self):
         return self.tokens[self.pos] if self.pos < len(self.tokens) else None
 
@@ -104,6 +18,15 @@ class ParseNode:
             self.advance()
             return True
         return False
+
+    def expect(self, token_type, context=None):
+        token = self.peek()
+        if token and token.getType() == token_type and (context is None or token.getContext() == context):
+            self.advance()
+            return token
+        raise SyntaxError(f"Expected token type {token_type} with context {context}, got {token}")
+  
+          
 
     def parseE(self):
         token = self.peek()
@@ -157,7 +80,7 @@ class ParseNode:
             true_branch = self.parseTc()
             self.expect(validTokenTypes.Operator, '|')
             false_branch = self.parseTc()
-            return ParseNode(NodeType.arrow, [b, true_branch, false_branch])
+            return ParseNode(NodeType.gre, [b, true_branch, false_branch])
         return b
 
     def parseB(self):
@@ -218,7 +141,9 @@ class ParseNode:
         if token and token.getType() == validTokenTypes.Operator and token.getContext() in ['+', '-']:
             self.advance()
             at = self.parseAt()
-            return ParseNode(NodeType.neg, [at])
+            # Fixed: Use the correct node type for unary operators
+            node_type = NodeType.plus if token.getContext() == '+' else NodeType.neg
+            return ParseNode(node_type, [at])
         a = self.parseAt()
         while True:
             token = self.peek()
@@ -257,22 +182,40 @@ class ParseNode:
         r = self.parseR()
         while self.match(validTokenTypes.Operator, '@'):
             id_token = self.expect(validTokenTypes.Identifier)
-            rator = ParseNode(NodeType.identifier, [id_token])
+            # Fixed: Create identifier node with value, not with token as child
+            rator = ParseNode(NodeType.identifier, value=id_token.getContext())
             rand = self.parseR()
             r = ParseNode(NodeType.at, [r, rator, rand])
         return r
 
     def parseR(self):
-        rn=self.parseRn()
-        while self.match(validTokenTypes.Keyword, 'gamma'):
-            self.advance()
-            r=self.parseR()
-            rn=ParseNode(NodeType.gamma,[rn,r])
+        rn = self.parseRn()
+        token= self.peek()
+        
+        while token and self.could_start_rn(token):
+            r = self.parseR()
+            rn = ParseNode(NodeType.gamma, [rn, r])
+            token = self.peek()  # Update token after parsing
         return rn
+    
+    def could_start_rn(self, token):
+    
+        if token.getType() == validTokenTypes.Keyword:
+            return token.getContext() in ['true', 'false', 'nil', 'dummy']
+        elif token.getType() in [validTokenTypes.Identifier, validTokenTypes.Integer, validTokenTypes.String]:
+            return True
+        elif token.getType() == validTokenTypes.Punction and token.getContext() == '(':
+            return True
+        return False
     
     def parseRn(self):
         token = self.peek()
-        if token and token.getType() == validTokenTypes.Keyword and token.getContext() == 'true':
+        if token and token.getType() == validTokenTypes.Punction and token.getContext() == '(':
+            self.advance()
+            e = self.parseE()
+            self.expect(validTokenTypes.Punction, ')')
+            return e
+        elif token and token.getType() == validTokenTypes.Keyword and token.getContext() == 'true':
             self.advance()
             return ParseNode(NodeType.true)
         elif token and token.getType() == validTokenTypes.Keyword and token.getContext() == 'false':
@@ -285,93 +228,92 @@ class ParseNode:
             self.advance()
             return ParseNode(NodeType.dummy)
         
-        elif token and token.getType() == validTokenTypes.Punction and token.getContext() == '(':
-            self.advance()
-            e = self.parseE()  # Parse the expression inside parentheses
-            self.expect(validTokenTypes.Punction, ')')  # Ensure closing parenthesis
-            return e
         
-        elif (token := self.peek()) is not None:
-            if (token_type := token.getType()) in {validTokenTypes.Identifier, validTokenTypes.Integer, validTokenTypes.String}:
+        elif token:
+            if token.getType() == validTokenTypes.Identifier:
                 self.advance()
-                return ParseNode(
-                    NodeType.identifier if token_type == validTokenTypes.Identifier else
-                    NodeType.integer if token_type == validTokenTypes.Integer else
-                    NodeType.string,
-                    value=token.getContext())
-    
+                return ParseNode(NodeType.identifier, value=token.getContext())
+            elif token.getType() == validTokenTypes.Integer:
+                self.advance()
+                return ParseNode(NodeType.integer, value=token.getContext())
+            elif token.getType() == validTokenTypes.String:
+                self.advance()
+                return ParseNode(NodeType.string, value=token.getContext())
+        
+        raise SyntaxError(f"Unexpected token: {token}")
 
     def parseD(self):
-        da=self.parseDa()
-        while self.match(validTokenTypes.Keyword,'within'):
-            self.advance()
-            d=self.parseD()
-            da=ParseNode(NodeType.within,[da,d])
+        da = self.parseDa()
+        while self.match(validTokenTypes.Keyword, 'within'):
+            # Fixed: Removed extra advance() call
+            d = self.parseD()
+            da = ParseNode(NodeType.within, [da, d])
         return da
     
     def parseDa(self):
-        dr=self.parseDr()
-        nodes=[dr]
-        while self.match(validTokenTypes.Keyword,'and'):
+        dr = self.parseDr()
+        nodes = [dr]
+        while self.match(validTokenTypes.Keyword, 'and'):
             nodes.append(self.parseDr())
-        if len(nodes)>1:
-            return ParseNode(NodeType.andop,nodes)
+        if len(nodes) > 1:
+            return ParseNode(NodeType.andop, nodes)
         return dr
     
     def parseDr(self):
-        
-        if self.match(validTokenTypes.Keyword,'rec'):
-            db=self.parseDb()
-            
-            return ParseNode(NodeType.rec,[db])
+        if self.match(validTokenTypes.Keyword, 'rec'):
+            db = self.parseDb()
+            return ParseNode(NodeType.rec, [db])
         return self.parseDb()
     
     def parseDb(self):
-        token=self.peek()
+        token = self.peek()
+        # Fixed: Check for "Vl" operator
         if token and token.getType() == validTokenTypes.Operator and token.getContext() == "Vl":
             self.advance()
-            vl=self.parseVl()
-            self.expect(validTokenTypes.Operator,'=')
-            e=self.parseE()
-            return ParseNode(NodeType.equal,[vl,e])
+            vl = self.parseVl()
+            self.expect(validTokenTypes.Operator, '=')
+            e = self.parseE()
+            return ParseNode(NodeType.equal, [vl, e])
         elif token and token.getType() == validTokenTypes.Identifier:
             id_token = self.expect(validTokenTypes.Identifier)
-            rator = ParseNode(NodeType.identifier, [id_token])
-            self.advance()
+            # Fixed: Create identifier node with value, not with token as child
+            rator = ParseNode(NodeType.identifier, value=id_token.getContext())
+            # Fixed: Removed extra advance() call
             vb_list = []
             while True:
-                
-                if self.peek().getType() == validTokenTypes.Operator and self.peek().getContext() == '=':
+                if self.peek() and self.peek().getType() == validTokenTypes.Operator and self.peek().getContext() == '=':
                     self.advance()
                     break
                 vb = self.parseVb()
                 vb_list.append(vb)
             
             e = self.parseE()
-            return ParseNode(NodeType.fcn_form,rator, vb_list + [e])
+            # Fixed: Corrected parameter order for fcn_form
+            return ParseNode(NodeType.fcn_form, [rator] + vb_list + [e])
         
         elif token and token.getType() == validTokenTypes.Punction and token.getContext() == '(':
             self.advance()
-            d = self.parseD()  # Parse the expression inside parentheses
-            self.expect(validTokenTypes.Punction, ')')  # Ensure closing parenthesis
+            d = self.parseD()
+            self.expect(validTokenTypes.Punction, ')')
             return d
-
         
+        raise SyntaxError(f"Unexpected token in parseDb: {token}")
+    
     def parseVb(self):
-        token=self.peek()
+        token = self.peek()
         if token and token.getType() == validTokenTypes.Punction and token.getContext() == '(':
             self.advance()
             if self.match(validTokenTypes.Punction, ')'):
                 return ParseNode(NodeType.empty_params)
             else:
                 vl = self.parseVl()
-                self.expect(validTokenTypes.Punction, ')')  # Ensure closing parenthesis
+                self.expect(validTokenTypes.Punction, ')')
                 return vl
         elif token and token.getType() == validTokenTypes.Identifier:
-        
             self.advance()
             return ParseNode(NodeType.identifier, value=token.getContext())
         
+        raise SyntaxError(f"Unexpected token in parseVb: {token}")
     
     def parseVl(self):
         nodes = []
@@ -380,34 +322,13 @@ class ParseNode:
             if token and token.getType() == validTokenTypes.Identifier:
                 self.advance()
                 nodes.append(ParseNode(NodeType.identifier, value=token.getContext()))
-                if not self.match(validTokenTypes.Punction, ','):  # Check for a comma
+                if not self.match(validTokenTypes.Punction, ','):
                     break
             else:
                 break
         if len(nodes) == 1:
-            return nodes[0]  # Return a single identifier if there's no list
-        return ParseNode(NodeType.comma, nodes)  # Return a node representing the list
-
-        
-        
-    def expect(self, token_type, context=None):
-        token = self.peek()
-        if not token or token.getType() != token_type or (context and token.getContext() != context):
-            raise SyntaxError(f"Expected {token_type} {context}, but got {token}")
-        self.advance()
+            return nodes[0]
+        return ParseNode(NodeType.comma, nodes)
 
     def parse(self):
-        return self.parseE()   
-    
-
-
-    
-    
-        
-
-
-            
-    
-
-        
-        
+        return self.parseE()

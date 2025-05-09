@@ -1,5 +1,5 @@
 from Lexer.lexicalAnalyzer import tokenize
-from Parser.parser import ParseNode
+from Parser.parser import ASTParser
 
 if __name__ == "__main__":
     # Read code from the file inside "input" folder
@@ -14,9 +14,10 @@ if __name__ == "__main__":
     print("\n✅ Final Tokens:")
     for token in tokens:
         print(f"Type: {token.getType().name}, Value: {token.getContext()}")
+        
 
     # Create a parser instance with the tokens
-    parser = ParseNode(None, tokens=tokens)
+    parser = ASTParser(tokens=tokens)
     
     # Parse the tokens into a syntax tree
     parse_tree = parser.parse()
