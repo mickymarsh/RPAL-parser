@@ -19,9 +19,6 @@ if __name__ == "__main__":
 
         print(f"Type: {token.getType().name}, Value: {token.getContext()}")
 
-    # Create a parser instance with the tokens
-
-
     parser = ASTParser(tokens=tokens)
     # Parse the tokens into a syntax tree
     parse_tree = parser.parse()
