@@ -8,7 +8,7 @@ class Node:
 
     # This function makes the tree print nicely with indentation
     def __repr__(self, level=0):
-        result = "    " * level + str(self.label) + "\n"
+        result = "." * level + str(self.label) + "\n"
         for child in self.children:
             result += child.__repr__(level + 1)
         return result
