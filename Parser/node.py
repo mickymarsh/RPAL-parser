@@ -57,22 +57,22 @@ class ParseNode:
     
 
 
-    # def print_tree(self, indent=0):
-        # print('  ' * indent + str(self))
-        # if indent == 0 and self.children:
-        #     if isinstance(self.children, list):
-        #         for child in self.children:
-        #             if child is not None:
-        #                 # print('  ' * (indent + 1) + str(child))
-        #                 break 
+    def print_tree_as_string(self, indent=0):
+        print('  ' * indent + str(self))
+        if indent == 0 and self.children:
+            if isinstance(self.children, list):
+                for child in self.children:
+                    if child is not None:
+                        # print('  ' * (indent + 1) + str(child))
+                        break 
                         
-        #             else:
-        #                 print('  ' * (indent + 1) + "None")
-        #     elif self.children is not None:
-        #         print('  ' * (indent + 1) + str(self.children))
+                    else:
+                        print('  ' * (indent + 1) + "None")
+            elif self.children is not None:
+                print('  ' * (indent + 1) + str(self.children))
                 
-        #     else:
-        #         print('  ' * (indent + 1) + "None")
+            else:
+                print('  ' * (indent + 1) + "None")
 
     def print_tree(self, indent=0):
         # Format the current node
