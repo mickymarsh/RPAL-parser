@@ -57,7 +57,7 @@ class ParseNode:
     
 
 
-    def print_tree(self, indent=0):
+    def print_tree_as_string(self, indent=0):
         print('  ' * indent + str(self))
         if indent == 0 and self.children:
             if isinstance(self.children, list):
@@ -73,3 +73,74 @@ class ParseNode:
                 
             else:
                 print('  ' * (indent + 1) + "None")
+
+    def print_tree(self, indent=0):
+        # Format the current node
+        if self.value is not None:
+            if self.node_type == NodeType.identifier:
+                formatted_value = f"<ID:{self.value}>"
+            elif self.node_type == NodeType.integer:
+                formatted_value = f"<INT:{self.value}>"
+            elif self.node_type == NodeType.string:
+                formatted_value = f"<STR:{self.value}>"
+            else:
+                formatted_value = f"{self.node_type.name}({self.value})"
+        else:
+            # Map node types to desired format
+            if self.node_type == NodeType.fcn_form:
+                formatted_value = "function_form"
+            elif self.node_type == NodeType.gre:
+                formatted_value = "->"
+            elif self.node_type == NodeType.gr:
+                formatted_value = "gr"
+            elif self.node_type == NodeType.neg:
+                formatted_value = "-"
+            elif self.node_type == NodeType.plus:
+                formatted_value = "+"
+            elif self.node_type == NodeType.minus:
+                formatted_value = "-"
+            elif self.node_type == NodeType.mul:
+                formatted_value = "*"
+            elif self.node_type == NodeType.div:
+                formatted_value = "/"
+            elif self.node_type == NodeType.pow:
+                formatted_value = "**"
+            elif self.node_type == NodeType.eq:
+                formatted_value = "eq"
+            elif self.node_type == NodeType.equal:
+                formatted_value = "="
+            elif self.node_type == NodeType.comma:
+                formatted_value = ","
+            elif self.node_type == NodeType.andop:
+                formatted_value = "and"
+            elif self.node_type == NodeType.or_:
+                formatted_value = "or"
+            elif self.node_type == NodeType.and_:
+                formatted_value = "&"
+            elif self.node_type == NodeType.not_:
+                formatted_value = "not"
+            elif self.node_type == NodeType.ge:
+                formatted_value = "ge"
+            elif self.node_type == NodeType.le:
+                formatted_value = "le"
+            elif self.node_type == NodeType.ls:
+                formatted_value = "ls"
+            elif self.node_type == NodeType.ne:
+                formatted_value = "!="
+            elif self.node_type == NodeType.at:
+                formatted_value = "@"
+            elif self.node_type == NodeType.within:
+                formatted_value = "within"
+            elif self.node_type == NodeType.empty_params:
+                formatted_value = "()"
+            else:
+                formatted_value = self.node_type.name
+        
+        # Print current node with dot indentation
+        print('.' * indent + formatted_value)
+        
+        # Recursively print all children
+        if self.children:
+            for child in self.children:
+                if child is not None:
+                    child.print_tree(indent + 1)
