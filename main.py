@@ -1,5 +1,6 @@
 from Lexer.lexicalAnalyzer import tokenize
 from Parser.parser import ASTParser
+from Standardizer.standardizer import Standardizer
 
 if __name__ == "__main__":
     # Read code from the file inside "input" folder
@@ -15,13 +16,18 @@ if __name__ == "__main__":
     tokens = tokenize(code)
     print("\n✅ Final Tokens:")
     for token in tokens:
-
-
         print(f"Type: {token.getType().name}, Value: {token.getContext()}")
 
     parser = ASTParser(tokens=tokens)
-    # Parse the tokens into a syntax tree
     parse_tree = parser.parse()
-    # Print the parse tree using the class method
-    print("\n🌳 Parse Tree:")
+    print("\n🌳 Abstract Syntax Tree:")
     parse_tree.print_tree()
+    print("\n🌳 Abstract Syntax Tree as String:")
+    parse_tree.print_tree_as_string()
+
+    
+    standardizer = Standardizer()
+    standard_tree = standardizer.standardize(parse_tree)
+
+    print("\n🌲 Standardized Tree (ST):")
+    standard_tree.print()
