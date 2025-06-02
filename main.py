@@ -4,7 +4,7 @@ from Standardizer.standardizer import Standardizer
 
 if __name__ == "__main__":
     # Read code from the file inside "input" folder
-    with open("E:/PLProject/RPAL-parser/Inputs/Q1.txt", "r") as file:
+    with open("Inputs/Q1.txt", "r") as file:
 
 
         code = file.read()
