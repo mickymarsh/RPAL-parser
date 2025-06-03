@@ -12,9 +12,11 @@ class CSEMachine:
         j = 1
         while self.control:
             current_symbol = self.control.pop()
+            
 
             # rule 01
             if isinstance(current_symbol, Id):
+                print(current_symbol.get_data())
                 self.stack.insert(0, current_environment.lookup(current_symbol))
 
             #rule 02
@@ -76,7 +78,7 @@ class CSEMachine:
 
                 else:
                     # Handle other symbols
-                    if next_symbol.get_data() == "Print":
+                    if next_symbol.get_data() == "print":
                         pass
                     elif next_symbol.get_data() == "Stem":
                         # implement Stem function
@@ -310,7 +312,7 @@ class CSEMachine:
         print("Stack: ", end="")
         for symbol in self.stack:
             print(symbol.get_data(), end="")
-            if isinstance(symbol, (Lambda, Delta, E, Eta)):
+            if isinstance(symbol, (Lambda, Delta, Env, Neeta)):
                 print(symbol.get_index(), end="")
             print(",", end="")
         print()
@@ -319,7 +321,7 @@ class CSEMachine:
         print("Control: ", end="")
         for symbol in self.control:
             print(symbol.get_data(), end="")
-            if isinstance(symbol, (Lambda, Delta, E, Eta)):
+            if isinstance(symbol, (Lambda, Delta, Env, Neeta)):
                 print(symbol.get_index(), end="")
             print(",", end="")
         print()

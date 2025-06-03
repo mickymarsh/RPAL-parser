@@ -13,7 +13,7 @@ class CSEMachineFactory:
         data = node.get_data()
         if data in ("not", "neg"):
             return Uop(data)  # Unary operator symbol
-        elif data in ("+", "-", "*", "/", "**", "&", "or", "eq", "ne", "ls", "le", "gr", "ge", "aug"):
+        elif data in ("plus", "minus", "mul", "div", "pow", "and", "or", "eq", "ne", "ls", "le", "gr", "ge", "aug"):
             return Bop(data)  # Binary operator symbol
         elif data == "gamma":
             return Gamma()  # Gamma symbol
@@ -22,12 +22,12 @@ class CSEMachineFactory:
         elif data == "<Y*>":
             return Ystar()  # Y* symbol
         else:
-            if data.startswith("<IDENTIFIER:"):
-                return Id(data[12:-1])  # Identifier symbol
-            elif data.startswith("<INTEGER:"):
-                return Int(data[9:-1])  # Integer symbol
-            elif data.startswith("<STRING:"):
-                return Str(data[9:-2])  # String symbol
+            if data.startswith("<ID:"):
+                return Id(data[4:-1])  # Identifier symbol
+            elif data.startswith("<INT:"):
+                return Int(data[5:-1])  # Integer symbol
+            elif data.startswith("<STR:"):
+                return Str(data[6:-2])  # String symbol
             elif data.startswith("<NIL"):
                 return Aug()  # Tuple symbol
             elif data.startswith("<TRUE_VALUE:t"):
@@ -51,9 +51,9 @@ class CSEMachineFactory:
         lambda_expr.set_delta(self.get_delta(node.get_children()[1]))
         if node.get_children()[0].get_data() == ",":
             for identifier in node.get_children()[0].get_children():
-                lambda_expr.identifiers.append(Id(identifier.get_data()[12:-1]))
+                lambda_expr.identifiers.append(Id(identifier.get_data()[4:-1]))
         else:
-            lambda_expr.identifiers.append(Id(node.get_children()[0].get_data()[12:-1]))
+            lambda_expr.identifiers.append(Id(node.get_children()[0].get_data()[4:-1]))
         return lambda_expr
 
     def get_pre_order_traverse(self, node: STNode):
@@ -75,6 +75,9 @@ class CSEMachineFactory:
         delta = Delta(self.j)
         self.j += 1
         delta.symbols = self.get_pre_order_traverse(node)
+        print(delta.index,"th delta is:")
+        for x in delta.symbols:
+            print(x.data)
         return delta
 
     def get_control(self, st):
