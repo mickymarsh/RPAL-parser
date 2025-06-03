@@ -1,181 +1,353 @@
-# AE 
-class Delta:
-    def __init__(self, i):
-        self.data = "delta"
-        self.index = i
-        self.symbols = []
+from .node import *
 
-    def set_index(self, i):
-        self.index = i
+class CSEMachine:
+    def __init__(self, control, stack, environment):
+        self.control = control
+        self.stack = stack
+        self.environment = environment
 
-    def get_index(self):
-        return self.index
-    
-# ----------------------------------------------------------------------------------------------------------------------------------------------
-# environment
+    def execute(self):
+        # Execute the CSEMachine
+        current_environment = self.environment[0]
+        j = 1
+        while self.control:
+            current_symbol = self.control.pop()
 
-class Env:
-    def __init__(self, i):
-        self.data = "e"
-        self.index = i
-        self.parent = None
-        self.is_removed = False
-        self.values = {}
+            # rule 01
+            if isinstance(current_symbol, Id):
+                self.stack.insert(0, current_environment.lookup(current_symbol))
 
-    def set_parent(self, e):
-        self.parent = e
+            #rule 02
+            elif isinstance(current_symbol, Lambda):
+                current_symbol.set_environment(current_environment.get_index())
+                self.stack.insert(0, current_symbol)
 
-    def get_parent(self):
-        return self.parent
+            elif isinstance(current_symbol, Gamma):
+                next_symbol = self.stack.pop(0)
 
-    def set_index(self, i):
-        self.index = i
+                # rule 04
+                if isinstance(next_symbol, Lambda):
+                    lambda_expr = next_symbol
+                    e = Env(j)
+                    j += 1
+                    if len(lambda_expr.identifiers) == 1:
+                        temp = self.stack.pop(0)
+                        e.values[lambda_expr.identifiers[0]] = temp
+                    else:
+                        tup = self.stack.pop(0)
+                        for i, id in enumerate(lambda_expr.identifiers):
+                            e.values[id] = tup.symbols[i]
+                    for env in self.environment:
+                        if env.get_index() == lambda_expr.get_environment():
+                            e.set_parent(env)
+                    current_environment = e
+                    self.control.append(e)
+                    self.control.append(lambda_expr.get_delta())
+                    self.stack.insert(0, e)
+                    self.environment.append(e)
 
-    def get_index(self):
-        return self.index
+                # rule 10
+                elif isinstance(next_symbol, Aug):
+                    # Handle Tup expression
+                    tup = next_symbol
+                    i = int(self.stack.pop(0).get_data())
+                    self.stack.insert(0, tup.symbols[i - 1])
 
-    def set_is_removed(self, is_removed):
-        self.is_removed = is_removed
+                # rule 12
+                elif isinstance(next_symbol, Ystar):
+                    # Handle Ystar expression
+                    lambda_expr = self.stack.pop(0)
+                    eta = Neeta()
+                    eta.set_index(lambda_expr.get_index())
+                    eta.set_environment(lambda_expr.get_environment())
+                    eta.set_identifier(lambda_expr.identifiers[0])
+                    eta.set_lambda(lambda_expr)
+                    self.stack.insert(0, eta)
 
-    def get_is_removed(self):
-        return self.is_removed
+                # rule 13
+                elif isinstance(next_symbol, Neeta):
+                    # Handle Eta expression
+                    eta = next_symbol
+                    lambda_expr = eta.get_lambda()
+                    self.control.append(Gamma())
+                    self.control.append(Gamma())
+                    self.stack.insert(0, eta)
+                    self.stack.insert(0, lambda_expr)
 
-    def lookup(self, id):
-        for key in self.values:
-            if key.get_data() == id.get_data():
-                return self.values[key]
-        if self.parent is not None:
-            return self.parent.lookup(id)
+                else:
+                    # Handle other symbols
+                    if next_symbol.get_data() == "Print":
+                        pass
+                    elif next_symbol.get_data() == "Stem":
+                        # implement Stem function
+                        s = self.stack.pop(0)
+                        s.set_data(s.get_data()[0])
+                        self.stack.insert(0, s)
+                    elif next_symbol.get_data() == "Stern":
+                        # implement Stern function
+                        s = self.stack.pop(0)
+                        s.set_data(s.get_data()[1:])
+                        self.stack.insert(0, s)
+                    elif next_symbol.get_data() == "Conc":
+                        # implement Conc function
+                        s1 = self.stack.pop(0)
+                        s2 = self.stack.pop(0)
+                        s1.set_data(s1.get_data() + s2.get_data())
+                        self.stack.insert(0, s1)
+                    elif next_symbol.get_data() == "Order":
+                        # implement Order function
+                        tup = self.stack.pop(0)
+                        n = Int(str(len(tup.symbols)))
+                        self.stack.insert(0, n)
+                    elif next_symbol.get_data() == "Isinteger":
+                        # implement Isinteger function
+                        if isinstance(self.stack[0], Int):
+                            self.stack.insert(0, Bool("true"))
+                        else:
+                            self.stack.insert(0, Bool("false"))
+                        self.stack.pop(1)
+                    elif next_symbol.get_data() == "Null":
+                        # implement Null function
+                        pass
+                    elif next_symbol.get_data() == "Itos":
+                        # implement Itos function
+                        pass
+                    elif next_symbol.get_data() == "Isstring":
+                        # implement Isstring function
+                        if isinstance(self.stack[0], Str):
+                            self.stack.insert(0, Bool("true"))
+                        else:
+                            self.stack.insert(0, Bool("false"))
+                        self.stack.pop(1)
+                    elif next_symbol.get_data() == "Istuple":
+                        # implement Istuple function
+                        if isinstance(self.stack[0], Aug):
+                            self.stack.insert(0, Bool("true"))
+                        else:
+                            self.stack.insert(0, Bool("false"))
+                        self.stack.pop(1)
+                    elif next_symbol.get_data() == "Istruthvalue":
+                        # implement Istruthvalue function
+                        if isinstance(self.stack[0], Bool):
+                            self.stack.insert(0, Bool("true"))
+                        else:
+                            self.stack.insert(0, Bool("false"))
+                        self.stack.pop(1)
+                    elif next_symbol.get_data() == "Isfunction":
+                        # implement Isfunction function
+                        if isinstance(self.stack[0], Lambda):
+                            self.stack.insert(0, Bool("true"))
+                        else:
+                            self.stack.insert(0, Bool("false"))
+                        self.stack.pop(1)
+
+            # rule 05
+            elif isinstance(current_symbol, Env):
+                # Handle e expression
+                self.stack.pop(1)
+                self.environment[current_symbol.get_index()].set_is_removed(True)
+                y = len(self.environment)
+                while y > 0:
+                    if not self.environment[y - 1].get_is_removed():
+                        current_environment = self.environment[y - 1]
+                        break
+                    else:
+                        y -= 1
+
+            # rule 06
+            elif isinstance(current_symbol, Rator):
+                if isinstance(current_symbol, Uop):
+                    # Handle Unary operation
+                    rator = current_symbol
+                    rand = self.stack.pop(0)
+                    self.stack.insert(0, self.apply_unary_operation(rator, rand))
+                if isinstance(current_symbol, Bop):
+                    # Handle Binary operation
+                    rator = current_symbol
+                    rand1 = self.stack.pop(0)
+                    rand2 = self.stack.pop(0)
+                    self.stack.insert(0, self.apply_binary_operation(rator, rand1, rand2))
+
+            # rule 08
+            elif isinstance(current_symbol, Beta):
+                if (self.stack[0].get_data() == "true"):
+                    self.control.pop()
+                else:
+                    self.control.pop(-2)
+                self.stack.pop(0)
+
+            # rule 09
+            elif isinstance(current_symbol, Tau):
+                # Handle Tau expression
+                tau = current_symbol
+                tup = Aug()
+                for _ in range(tau.get_n()):
+                    tup.symbols.append(self.stack.pop(0))
+                self.stack.insert(0, tup)
+            elif isinstance(current_symbol, Delta):
+                # Handle Delta expression
+                self.control.extend(current_symbol.symbols)
+
+            # me mona magulak d kiyala mn dannahhhh!!!!!!!
+            elif isinstance(current_symbol, Container):
+                # Handle B expression
+                self.control.extend(current_symbol.symbols)
+            else:
+                self.stack.insert(0, current_symbol)
+            
+
+# ================================================================================================================================================= 
+
+    def print_environment(self):
+        # Print the environment symbols
+        for symbol in self.environment:
+            print(f"e{symbol.get_index()} --> ", end="")
+            if symbol.get_index() != 0:
+                print(f"e{symbol.get_parent().get_index()}")
+            else:
+                print()
+                
+    def covert_string_to_bool(self, data):
+        if data == "true":
+            return True
+        elif data == "false":
+            return False
+
+    def apply_unary_operation(self, rator, rand):
+        # Apply unary operation
+        if rator.get_data() == "neg":
+            val = int(rand.get_data())
+            return Int(str(-1 * val))
+        elif rator.get_data() == "not":
+            val = self.covert_string_to_bool(rand.get_data())
+            return Bool(str(not val).lower())
         else:
-            return Id(id.get_data())
+            return "Error"
 
-# --------------------------------------------------------------------------------------------------------------------------------------------
+    def apply_binary_operation(self, rator, rand1, rand2):
+        # Apply binary operation
+        if rator.get_data() == "+":
+            val1 = int(rand1.get_data())
+            val2 = int(rand2.get_data())
+            return Int(str(val1 + val2))
+        elif rator.data == "-":
+            val1 = int(rand1.data)
+            val2 = int(rand2.data)
+            return Int(str(val1 - val2))
+        elif rator.data == "*":
+            val1 = int(rand1.data)
+            val2 = int(rand2.data)
+            return Int(str(val1 * val2))
+        elif rator.data == "/":
+            val1 = int(rand1.data)
+            val2 = int(rand2.data)
+            return Int(str(int(val1 / val2)))
+        elif rator.data == "**":
+            val1 = int(rand1.data)
+            val2 = int(rand2.data)
+            return Int(str(val1 ** val2))
+        elif rator.data == "&":
+            val1 = self.covert_string_to_bool(rand1.data)
+            val2 = self.covert_string_to_bool(rand2.data)
+            return Bool(str(val1 and val2).lower())
+        elif rator.data == "or":
+            val1 = self.covert_string_to_bool(rand1.data)
+            val2 = self.covert_string_to_bool(rand2.data)
+            return Bool(str(val1 or val2).lower())
+        elif rator.data == "eq":
+            val1 = rand1.data
+            val2 = rand2.data
+            return Bool(str(val1 == val2).lower())
+        elif rator.data == "ne":
+            val1 = rand1.data
+            val2 = rand2.data
+            return Bool(str(val1 != val2).lower())
+        elif rator.data == "ls":
+            val1 = int(rand1.data)
+            val2 = int(rand2.data)
+            return Bool(str(val1 < val2).lower())
+        elif rator.data == "le":
+            val1 = int(rand1.data)
+            val2 = int(rand2.data)
+            return Bool((val1 <= val2))
+        elif rator.data == "gr":
+            val1 = int(rand1.data)
+            val2 = int(rand2.data)
+            return Bool(str(val1 > val2).lower())
+        elif rator.data == "ge":
+            val1 = int(rand1.data)
+            val2 = int(rand2.data)
+            return Bool(str(val1 >= val2).lower())
+        elif rator.data == "aug":
+            if isinstance(rand2, Aug):
+                rand1.symbols.extend(rand2.symbols)
+            else:
+                rand1.symbols.append(rand2)
+            return rand1
+        else:
+            return "Error"
 
-class Gamma:
-    def __init__(self):
-        self.data = "gamma"
+    def get_tuple_value(self, tup):
+        # Get the value of a tuple
+        temp = "("
+        for symbol in tup.symbols:
+            if isinstance(symbol, Aug):
+                temp += self.get_tuple_value(symbol) + ", "
+            else:
+                temp += symbol.get_data() + ", "
+        temp = temp[:-2] + ")"
+        return temp
 
-class Lambda:
-    def __init__(self, i):
-        self.data = "lambda"
-        self.index = i
-        self.environment = None
-        self.identifiers = []
-        self.delta = None
-
-    def set_environment(self, n):
-        self.environment = n
-
-    def get_environment(self):
-        return self.environment
-
-    def set_delta(self, delta):
-        self.delta = delta
-
-    def get_delta(self):
-        return self.delta
-    def get_index(self):
-        return self.index
+    def get_answer(self):
+        # Get the answer from the CSEMachine
+        self.execute()
+        if isinstance(self.stack[0], Aug):
+            return self.get_tuple_value(self.stack[0])
+        return self.stack[0].get_data()
+# ================================================================================================================================================= 
     
-class Neeta:
-    def __init__(self):
-        self.data = "neeta"
-        self.index = None
-        self.environment = None
-        self.identifier = None
-        self.lambda_ = None
-
-    def set_index(self, i):
-        self.index = i
-
-    def get_index(self):
-        return self.index
-
-    def set_environment(self, e):
-        self.environment = e
-
-    def get_environment(self):
-        return self.environment
-
-    def set_identifier(self, identifier):
-        self.identifier = identifier
-
-    def set_lambda(self, lambda_):
-        self.lambda_ = lambda_
-
-    def get_lambda(self):
-        return self.lambda_
+    def print_stack(self):
+        print("Stack: ", end="")
+        for symbol in self.stack:
+            print(symbol.get_data(), end="")
+            if isinstance(symbol, (Lambda, Delta, E, Eta)):
+                print(symbol.get_index(), end="")
+            print(",", end="")
+        print()
     
-# -------------------------------------------------------------------------------------------------------------------------------------------------
+    def print_control(self):
+        print("Control: ", end="")
+        for symbol in self.control:
+            print(symbol.get_data(), end="")
+            if isinstance(symbol, (Lambda, Delta, E, Eta)):
+                print(symbol.get_index(), end="")
+            print(",", end="")
+        print()
 
-# operand
-class Rand:
-    def __init__(self, data):
-        self.data = data
+# ================================================================================================================================================= 
+            
+    def write_stack_to_file(self, file_path): 
+        with open(file_path, r'D:\UOM\UOM_Files\S4 - Programming Languages') as file:
+            for symbol in self.stack:
+                file.write(symbol.get_data())
+                if isinstance(symbol, (Lambda, Delta, Env, Neeta)):
+                    file.write(str(symbol.get_index()))
+                file.write(",")
+            file.write("\n")
 
-    def get_data(self):
-        return self.data
-
-# operator
-class Rator:
-    def __init__(self, data):
-        self.data = data
-
-# condition
-class Beta:
-    def __init__(self):
-        self.data = "beta"
-        
-class Bool(Rand):
-    def __init__(self, data):
-        super().__init__(data)
-
-# binary operatore
-class Bop(Rator):
-    def __init__(self, data):
-        super().__init__(data)
-
-class Uop(Rator):
-    def __init__(self, data):
-        super().__init__(data)
-
-class Tau:
-    def __init__(self, n):
-        self.data = "tau"
-        self.set_n(n)
-
-    def set_n(self, n):
-        self.n = n
-
-    def get_n(self):
-        return self.n
-
-class Aug(Rand):
-    def __init__(self):
-        super().__init__("aug")
-        self.symbols = []
-
-# container that holds operations
-class Container:
-    def __init__(self):
-        self.data = "b"
-        self.symbols = []
-
-class Id(Rand):
-    def __init__(self, data):
-        super().__init__(data)
+    def write_control_to_file(self, file_path):
+        with open(file_path, r'D:\UOM\UOM_Files\S4 - Programming Languages') as file:
+            for symbol in self.control:
+                file.write(symbol.get_data())
+                if isinstance(symbol, (Lambda, Delta, Env, Neeta)):
+                    file.write(str(symbol.get_index()))
+                file.write(",")
+            file.write("\n")
     
-    def get_data(self):
-        return super().get_data()
+    def clear_file(file_path):
+        open(file_path, 'w').close()
+    
 
-class Int(Rand):
-    def __init__(self, data):
-        super().__init__(data)
 
-class Str(Rand):
-    def __init__(self, data):
-        super().__init__(data)
 
-class Ystar:
-    def __init__(self):
-        self.data = "<Y*>"
+    
