@@ -29,6 +29,12 @@ class STNode:
     def add_child(self, child):
         self.children.append(child)
 
+    def get_children(self):
+        return self.children
+    
+    def get_data(self):
+        return self.value if self.value else self.node_type.name.lower()
+
     def print(self, indent=0):
         label = self.value if self.value else self.node_type.name.lower()
         print("." * indent + str(label))

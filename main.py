@@ -1,10 +1,13 @@
 from Lexer.lexicalAnalyzer import tokenize
 from Parser.parser import ASTParser
 from Standardizer.standardizer import Standardizer
+from Standardizer.st_node import STNode
+from cse_machine.rules import CSEMachine
+from cse_machine.cse_machine import CSEMachineFactory
 
 if __name__ == "__main__":
     # Read code from the file inside "input" folder
-    with open("E:/PLProject/RPAL-parser/Inputs/Q1.txt", "r") as file:
+    with open("Inputs/Q1.txt", "r") as file:
 
 
         code = file.read()
@@ -28,6 +31,27 @@ if __name__ == "__main__":
     
     standardizer = Standardizer()
     standard_tree = standardizer.standardize(parse_tree)
-
     print("\n🌲 Standardized Tree (ST):")
     standard_tree.print()
+
+    print("\n root value is...", str(standard_tree.get_data()))
+
+    print(isinstance(standard_tree, STNode))
+
+    print("\n CSE Machine starts\n")
+
+    cse_machine_factory = CSEMachineFactory()
+    cse_machine = cse_machine_factory.get_cse_machine(standard_tree)
+
+    print("\nOutput of the above program is:")
+    print(cse_machine.get_answer())
+    
+    print("\nPrint the stack:")
+    print(cse_machine.print_stack())
+
+    print("\nPrint the control structure:")
+    print(cse_machine.print_control())
+        
+
+
+    
