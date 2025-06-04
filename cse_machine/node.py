@@ -1,3 +1,13 @@
+class Symbol:
+    def __init__(self, data):
+        self.data = data
+
+    def set_data(self, data):
+        self.data = data
+
+    def get_data(self):
+        return self.data
+
 # AE 
 class Delta:
     def __init__(self, i):
@@ -14,7 +24,7 @@ class Delta:
 # ----------------------------------------------------------------------------------------------------------------------------------------------
 # environment
 
-class Env:
+class Env(Symbol):
     def __init__(self, i):
         self.data = "e"
         self.index = i
@@ -33,6 +43,9 @@ class Env:
 
     def get_index(self):
         return self.index
+    
+    def get_data(self):
+        return self.data
 
     def set_is_removed(self, is_removed):
         self.is_removed = is_removed
@@ -47,15 +60,20 @@ class Env:
         if self.parent is not None:
             return self.parent.lookup(id)
         else:
-            return Id(id.get_data())
+            if id.get_data() == "ystar":
+                return Ystar()
+            return Symbol(id.get_data())
 
 # --------------------------------------------------------------------------------------------------------------------------------------------
 
-class Gamma:
+class Gamma(Symbol):
     def __init__(self):
         self.data = "gamma"
 
-class Lambda:
+    def get_data(self):
+        return self.data
+
+class Lambda(Symbol):
     def __init__(self, i):
         self.data = "lambda"
         self.index = i
@@ -77,7 +95,7 @@ class Lambda:
     def get_index(self):
         return self.index
     
-class Neeta:
+class Neeta(Symbol):
     def __init__(self):
         self.data = "neeta"
         self.index = None
@@ -110,7 +128,7 @@ class Neeta:
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 
 # operand
-class Rand:
+class Rand(Symbol):
     def __init__(self, data):
         self.data = data
 
@@ -118,7 +136,7 @@ class Rand:
         return self.data
 
 # operator
-class Rator:
+class Rator(Symbol):
     def __init__(self, data):
         self.data = data
 
@@ -126,7 +144,7 @@ class Rator:
         return self.data
 
 # condition
-class Beta:
+class Beta(Symbol):
     def __init__(self):
         self.data = "beta"
         
@@ -143,7 +161,7 @@ class Uop(Rator):
     def __init__(self, data):
         super().__init__(data)
 
-class Tau:
+class Tau(Symbol):
     def __init__(self, n):
         self.data = "tau"
         self.set_n(n)
@@ -153,6 +171,9 @@ class Tau:
 
     def get_n(self):
         return self.n
+    
+    def get_data(self):
+        return self.data
 
 class Aug(Rand):
     def __init__(self):
@@ -160,7 +181,7 @@ class Aug(Rand):
         self.symbols = []
 
 # container that holds operations
-class Container:
+class Container(Symbol):
     def __init__(self):
         self.data = "b"
         self.symbols = []
@@ -180,9 +201,9 @@ class Str(Rand):
     def __init__(self, data):
         super().__init__(data)
 
-class Ystar:
+class Ystar(Symbol):
     def __init__(self):
-        self.data = "<Y*>"
+        self.data = "ystar"
 
 class Dummy(Rand):
     def __init__(self):
