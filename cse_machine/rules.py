@@ -16,12 +16,10 @@ class CSEMachine:
 
             # rule 01
             if isinstance(current_symbol, Id) or isinstance(current_symbol, Int) or isinstance(current_symbol, Ystar):
-                print("Came to rule 1")
                 self.stack.insert(0, current_environment.lookup(current_symbol))
 
             #rule 02
             elif isinstance(current_symbol, Lambda):
-                print("Came to rule 2")
                 current_symbol.set_environment(current_environment.get_index())
                 self.stack.insert(0, current_symbol)
 
@@ -30,7 +28,6 @@ class CSEMachine:
 
                 # rule 04
                 if isinstance(next_symbol, Lambda):
-                    print("Came to rule 04")
                     lambda_expr = next_symbol
                     e = Env(j)
                     j += 1
@@ -59,15 +56,13 @@ class CSEMachine:
 
                 # rule 10
                 elif isinstance(next_symbol, Aug):
-                    print("Came to rule 10")
                     # Handle Tup expression
                     tup = next_symbol
-                    i = int(self.stack.pop(0).get_ata())
+                    i = int(self.stack.pop(0).get_data())
                     self.stack.insert(0, tup.symbols[i - 1])
 
                 # rule 12
                 elif isinstance(next_symbol, Ystar):
-                    print("Came to rule 12")
                     # Handle Ystar expression
                     lambda_expr = self.stack[0]
                     self.stack.pop(0)
@@ -80,7 +75,6 @@ class CSEMachine:
 
                 # rule 13
                 elif isinstance(next_symbol, Neeta):
-                    print("Came to rule 13")
                     # Handle Eta expression
                     eta = next_symbol
                     lambda_expr = eta.get_lambda()
@@ -158,7 +152,6 @@ class CSEMachine:
 
             # rule 05
             elif isinstance(current_symbol, Env):
-                print("Came to rule 5")
                 # Handle e expression
                 self.stack.pop(1)
                 self.environment[current_symbol.get_index()].set_is_removed(True)
@@ -172,7 +165,6 @@ class CSEMachine:
 
             # rule 06
             elif isinstance(current_symbol, Rator):
-                print("Came to rule 06")
                 if isinstance(current_symbol, Uop):
                     # Handle Unary operation
                     rator = current_symbol
@@ -188,16 +180,14 @@ class CSEMachine:
 
             # rule 08
             elif isinstance(current_symbol, Beta):
-                print("Came to rule 8")
                 if (self.stack[0].get_data() == "true"):
-                    self.control.pop()
+                    self.control.pop(-1)
                 else:
                     self.control.pop(-2)
                 self.stack.pop(0)
 
             # rule 09
             elif isinstance(current_symbol, Tau):
-                print("Came to rule 9")
                 # Handle Tau expression
                 tau = current_symbol
                 tup = Aug()
@@ -246,11 +236,11 @@ class CSEMachine:
 
     def apply_binary_operation(self, rator, rand1, rand2):
         # Apply binary operation
-        if rator.get_data() == "+":
+        if rator.get_data() == "plus":
             val1 = int(rand1.get_data())
             val2 = int(rand2.get_data())
             return Int(str(val1 + val2))
-        elif rator.data == "-":
+        elif rator.data == "minus":
             val1 = int(rand1.data)
             val2 = int(rand2.data)
             return Int(str(val1 - val2))

@@ -7,7 +7,7 @@ from cse_machine.cse_machine import CSEMachineFactory
 
 if __name__ == "__main__":
     # Read code from the file inside "input" folder
-    with open("E:\PLProject\RPAL-parser\Inputs\sir.txt", "r") as file:
+    with open("Inputs\sir.txt", "r") as file:
 
 
         code = file.read()
@@ -46,12 +46,7 @@ if __name__ == "__main__":
     print("\nOutput of the above program is:")
     print(cse_machine.get_answer())
     
-    print("\nPrint the stack:")
-    print(cse_machine.print_stack())
 
-    #print("\nPrint the control structure:")
-    #print(cse_machine.print_control())
-        
 
 
     
