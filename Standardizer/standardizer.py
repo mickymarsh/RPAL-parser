@@ -32,6 +32,8 @@ class Standardizer:
             return self._standardize_and(temp_node)
         elif node.node_type == NodeType.gre:
             return self._standardize_cond(temp_node)
+        elif node.node_type == NodeType.comma:
+            return self._standardize_comma(temp_node)
         elif node.node_type in [
             NodeType.aug, NodeType.or_, NodeType.and_, NodeType.not_,
             NodeType.plus, NodeType.minus, NodeType.neg, NodeType.mul,
@@ -49,8 +51,7 @@ class Standardizer:
             return STNode(STNodeType.TRUE)
         elif node.node_type == NodeType.false:
             return STNode(STNodeType.FALSE)
-        elif node.node_type == NodeType.comma:
-            return STNode(STNodeType.COMMA)
+        
         else:
             # default: gamma chain
             if len(node.children) == 2:
@@ -172,6 +173,15 @@ class Standardizer:
         eq.add_child(tau)
         return eq
 
+    def _standardize_comma(self, node):
+        comma = STNode(STNodeType.COMMA)
+        for child in node.children:
+            if child.node_type == NodeType.nil:
+                comma.add_child(STNode(STNodeType.NIL))
+            else:
+                comma.add_child(child)
+        return comma
+    
     def _standardize_cond(self, node):
         b = (node.children[0])
         t = (node.children[1])
