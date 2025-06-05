@@ -18,8 +18,9 @@ class CSEMachineFactory:
         elif data == "gamma":
             return Gamma()  # Gamma symbol
         elif data == "tau":
-            return Tau(len(node.get_children()))  # Tau symbol with the number of children
-        elif data == "<Y*>":
+            return Tau(len
+            (node.get_children()))  # Tau symbol with the number of children
+        elif data == "ystar":
             return Ystar()  # Y* symbol
         else:
             if data.startswith("<ID:"):
@@ -49,7 +50,7 @@ class CSEMachineFactory:
         lambda_expr = Lambda(self.i)
         self.i += 1
         lambda_expr.set_delta(self.get_delta(node.get_children()[1]))
-        if node.get_children()[0].get_data() == ",":
+        if node.get_children()[0].get_data() == "comma":
             for identifier in node.get_children()[0].get_children():
                 lambda_expr.identifiers.append(Id(identifier.get_data()[4:-1]))
         else:
