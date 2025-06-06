@@ -23,8 +23,8 @@ def tokenize(text):
 
             if match:
                 # debugging
-                print("Matched pattern:", key)       # <--- this is your key!
-                print("Matched value :", match.group(0))
+                # print("Matched pattern:", key)       # <--- this is your key!
+                # print("Matched value :", match.group(0))
 
                 if(key == "Space" or key == "Comment"):
                     matched = True

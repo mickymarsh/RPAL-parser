@@ -76,9 +76,9 @@ class CSEMachineFactory:
         delta = Delta(self.j)
         self.j += 1
         delta.symbols = self.get_pre_order_traverse(node)
-        print(delta.index,"th delta is:")
-        for x in delta.symbols:
-            print(x.data)
+        # print(delta.index,"th delta is:")  debugging step
+        # for x in delta.symbols:
+            # print(x.data)
         return delta
 
     def get_control(self, st):
