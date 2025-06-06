@@ -16,10 +16,12 @@ class CSEMachine:
 
             # rule 01
             if isinstance(current_symbol, Id) or isinstance(current_symbol, Int) or isinstance(current_symbol, Ystar):
+                
                 self.stack.insert(0, current_environment.lookup(current_symbol))
 
             #rule 02
             elif isinstance(current_symbol, Lambda):
+                
                 current_symbol.set_environment(current_environment.get_index())
                 self.stack.insert(0, current_symbol)
 
@@ -28,6 +30,7 @@ class CSEMachine:
 
                 # rule 04
                 if isinstance(next_symbol, Lambda):
+                    
                     lambda_expr = next_symbol
                     e = Env(j)
                     j += 1
@@ -56,6 +59,7 @@ class CSEMachine:
 
                 # rule 10
                 elif isinstance(next_symbol, Aug):
+                    
                     # Handle Tup expression
                     tup = next_symbol
                     i = int(self.stack.pop(0).get_data())
@@ -63,6 +67,7 @@ class CSEMachine:
 
                 # rule 12
                 elif isinstance(next_symbol, Ystar):
+                   
                     # Handle Ystar expression
                     lambda_expr = self.stack[0]
                     self.stack.pop(0)
@@ -75,6 +80,7 @@ class CSEMachine:
 
                 # rule 13
                 elif isinstance(next_symbol, Neeta):
+                    
                     # Handle Eta expression
                     eta = next_symbol
                     lambda_expr = eta.get_lambda()
@@ -152,6 +158,7 @@ class CSEMachine:
 
             # rule 05
             elif isinstance(current_symbol, Env):
+                
                 # Handle e expression
                 self.stack.pop(1)
                 self.environment[current_symbol.get_index()].set_is_removed(True)
@@ -165,6 +172,7 @@ class CSEMachine:
 
             # rule 06
             elif isinstance(current_symbol, Rator):
+                
                 if isinstance(current_symbol, Uop):
                     # Handle Unary operation
                     rator = current_symbol
@@ -180,6 +188,7 @@ class CSEMachine:
 
             # rule 08
             elif isinstance(current_symbol, Beta):
+                
                 if (self.stack[0].get_data() == "true"):
                     self.control.pop(-1)
                 else:
@@ -188,6 +197,7 @@ class CSEMachine:
 
             # rule 09
             elif isinstance(current_symbol, Tau):
+                
                 # Handle Tau expression
                 tau = current_symbol
                 tup = Aug()
@@ -198,7 +208,7 @@ class CSEMachine:
                 # Handle Delta expression
                 self.control.extend(current_symbol.symbols)
 
-            # me mona magulak d kiyala mn dannahhhh!!!!!!!
+            
             elif isinstance(current_symbol, Container):
                 # Handle B expression
                 self.control.extend(current_symbol.symbols)
@@ -244,51 +254,51 @@ class CSEMachine:
             val1 = int(rand1.data)
             val2 = int(rand2.data)
             return Int(str(val1 - val2))
-        elif rator.data == "*":
-            val1 = int(rand1.data)
-            val2 = int(rand2.data)
+        elif rator.get_data() == "*":
+            val1 = int(rand1.get_data())
+            val2 = int(rand2.get_data())
             return Int(str(val1 * val2))
-        elif rator.data == "/":
-            val1 = int(rand1.data)
-            val2 = int(rand2.data)
+        elif rator.get_data() == "/":
+            val1 = int(rand1.get_data())
+            val2 = int(rand2.get_data())
             return Int(str(int(val1 / val2)))
-        elif rator.data == "**":
-            val1 = int(rand1.data)
-            val2 = int(rand2.data)
+        elif rator.get_data() == "**":
+            val1 = int(rand1.get_data())
+            val2 = int(rand2.get_data())
             return Int(str(val1 ** val2))
-        elif rator.data == "&":
-            val1 = self.covert_string_to_bool(rand1.data)
-            val2 = self.covert_string_to_bool(rand2.data)
+        elif rator.get_data() == "&":
+            val1 = self.covert_string_to_bool(rand1.get_data())
+            val2 = self.covert_string_to_bool(rand2.get_data())
             return Bool(str(val1 and val2).lower())
-        elif rator.data == "or":
-            val1 = self.covert_string_to_bool(rand1.data)
-            val2 = self.covert_string_to_bool(rand2.data)
+        elif rator.get_data() == "or":
+            val1 = self.covert_string_to_bool(rand1.get_data())
+            val2 = self.covert_string_to_bool(rand2.get_data())
             return Bool(str(val1 or val2).lower())
-        elif rator.data == "eq":
-            val1 = rand1.data
-            val2 = rand2.data
+        elif rator.get_data() == "eq":
+            val1 = rand1.get_data()
+            val2 = rand2.get_data()
             return Bool(str(val1 == val2).lower())
-        elif rator.data == "ne":
-            val1 = rand1.data
-            val2 = rand2.data
+        elif rator.get_data() == "ne":
+            val1 = rand1.get_data()
+            val2 = rand2.get_data()
             return Bool(str(val1 != val2).lower())
-        elif rator.data == "ls":
-            val1 = rand1.data
-            val2 = rand2.data
+        elif rator.get_data() == "ls":
+            val1 = rand1.get_data()
+            val2 = rand2.get_data()
             return Bool(str(val1 < val2).lower())
-        elif rator.data == "le":
-            val1 = int(rand1.data)
-            val2 = int(rand2.data)
+        elif rator.get_data() == "le":
+            val1 = int(rand1.get_data())
+            val2 = int(rand2.get_data())
             return Bool((val1 <= val2))
-        elif rator.data == "gr":
-            val1 = rand1.data
-            val2 = rand2.data
+        elif rator.get_data() == "gr":
+            val1 = rand1.get_data()
+            val2 = rand2.get_data()
             return Bool(str(val1 > val2).lower())
-        elif rator.data == "ge":
-            val1 = int(rand1.data)
-            val2 = int(rand2.data)
+        elif rator.get_data() == "ge":
+            val1 = int(rand1.get_data())
+            val2 = int(rand2.get_data())
             return Bool(str(val1 >= val2).lower())
-        elif rator.data == "aug":
+        elif rator.get_data() == "aug":
             if isinstance(rand2, Aug):
                 rand1.symbols.extend(rand2.symbols)
             else:
